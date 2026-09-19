@@ -1,3 +1,5 @@
+// Esta es la conexión con PostgreSQL
+
 import pg from "pg";
 import dotenv from "dotenv";
 

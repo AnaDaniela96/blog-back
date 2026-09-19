@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./db.js";
+import { findAllPublished } from "./repositories/content.repository.js";
 
 dotenv.config();
 
@@ -16,36 +17,14 @@ app.get("/", (req, res) => {
 
 app.get("/api/content", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        c.id,
-        c.slug,
-        c.title,
-        c.type,
-        c.excerpt,
-        c.body_markdown,
-        c.cover_url,
-        c.seo_description,
-        c.og_image_url,
-        c.published,
-        c.published_at,
-        c.created_at,
-        COALESCE(
-          array_agg(t.name) FILTER (WHERE t.name IS NOT NULL),
-          '{}'
-        ) AS tags
-      FROM content c
-      LEFT JOIN content_tags ct ON ct.content_id = c.id
-      LEFT JOIN tags t ON t.id = ct.tag_id
-      WHERE c.published = true
-      GROUP BY c.id
-      ORDER BY c.published_at DESC NULLS LAST, c.created_at DESC;
-    `);
+    const content = await findAllPublished();
 
-    res.json(result.rows);
+    res.json(content);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "error obteniendo posts" });
+    res.status(500).json({
+      error: "error obteniendo posts",
+    });
   }
 });
 
@@ -497,6 +476,8 @@ app.get("/api/content/movies/:slug", async (req, res) => {
     res.status(500).json({ error: "error obteniendo película" });
   }
 });
+
+
 
 app.listen(3001, () => {
   console.log("Servidor corriendo en http://localhost:3001");
