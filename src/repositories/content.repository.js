@@ -1,7 +1,9 @@
 import { pool } from "../db.js";
 
-export const findAllPublished = async () => {
-  const result = await pool.query(`
+export const findAllPublished = async (type) => {
+  const values = [];
+
+  let query = `
     SELECT
       c.id,
       c.slug,
@@ -23,9 +25,53 @@ export const findAllPublished = async () => {
     LEFT JOIN content_tags ct ON ct.content_id = c.id
     LEFT JOIN tags t ON t.id = ct.tag_id
     WHERE c.published = true
+  `;
+
+  if (type) {
+    values.push(type);
+    query += ` AND c.type = $1`;
+  }
+
+  query += `
     GROUP BY c.id
     ORDER BY c.published_at DESC NULLS LAST, c.created_at DESC;
-  `);
+  `;
+
+  const result = await pool.query(query, values);
 
   return result.rows;
+};
+
+export const findPublishedBySlug = async (slug) => {
+  const result = await pool.query(
+    `
+    SELECT
+      c.id,
+      c.slug,
+      c.title,
+      c.type,
+      c.excerpt,
+      c.body_markdown,
+      c.cover_url,
+      c.seo_description,
+      c.og_image_url,
+      c.published,
+      c.published_at,
+      c.created_at,
+      COALESCE(
+        array_agg(t.name) FILTER (WHERE t.name IS NOT NULL),
+        '{}'
+      ) AS tags
+    FROM content c
+    LEFT JOIN content_tags ct ON ct.content_id = c.id
+    LEFT JOIN tags t ON t.id = ct.tag_id
+    WHERE c.slug = $1
+      AND c.published = true
+    GROUP BY c.id
+    LIMIT 1;
+    `,
+    [slug]
+  );
+
+  return result.rows[0] || null;
 };
