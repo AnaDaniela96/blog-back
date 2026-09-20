@@ -1,13 +1,10 @@
-import { Router } from "express";
-
+// Qué llegó en la petición y qué respuesta HTTP envío?
 import {
   findAllPublished,
   findPublishedBySlug,
 } from "../repositories/content.repository.js";
 
-const router = Router();
-
-router.get("/", async (req, res) => {
+export const getAllContent = async (req, res) => {
   try {
     const { type } = req.query;
 
@@ -21,9 +18,9 @@ router.get("/", async (req, res) => {
       error: "error obteniendo contenido",
     });
   }
-});
+};
 
-router.get("/:slug", async (req, res) => {
+export const getContentBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -43,6 +40,4 @@ router.get("/:slug", async (req, res) => {
       error: "error obteniendo contenido",
     });
   }
-});
-
-export default router;
+};
